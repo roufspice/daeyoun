@@ -364,11 +364,14 @@ class ScriptScraper(BaseScraper):
 
 
 
+def main():
+    """여기다가 코드 작성하세요~"""
+    c1 = ScriptScraper(is_confirmed=1)
+    c1.do_crawler(start_page=0)
 
 
+if __name__ == '__main__':
+    main()
 
-
-c2 = ScriptScraper(is_transcripted=1, is_invalid=1)
-c2.do_crawler(start_page=0)
 
 
