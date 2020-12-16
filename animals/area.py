@@ -1,11 +1,9 @@
 # area 모듈
-PI = 3.14
+from animals import PI
+
 
 def circle(radius):
     return PI * radius * radius
 
 def square(length):
     return length * length
-
-print(circle(2) == 12.56)
-print(circle(5) == 78.5)

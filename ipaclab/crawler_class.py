@@ -295,13 +295,6 @@ class ScriptScraper(BaseScraper):
             f_output.write(dataset.export('xlsx'))
 
 
-
-# class BugCheck:
-#     """번역문과 원문의 갯수 차이가 있는 번역문을 확인하는 클래스"""
-#     def __init__(self):
-#         """버그번역문을 리스트에 담는 설정 """
-#         self. is_bug_exists = []
-
     def is_get_bugs(self, data_dict=None):
         """
         버그가 존재하는 tranNum keys를 리스트로 리턴함
