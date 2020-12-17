@@ -6,6 +6,7 @@ import os
 import time
 import datetime
 
+
 class Params:
     """request 필요한 요청정보 클래스"""
     headers = {
@@ -18,6 +19,7 @@ class Params:
         'Accept-Language': 'ko-KR,ko;q=0.9',
     }
     main_params = {
+        'is_assigned': '',  # 작업자할당
         'is_transcripted': '',  # 작업전체보기
         'is_confirmed': '',  # 컨펌전체보기
         'is_invalid': '',  # 문서오류보기
@@ -35,16 +37,19 @@ class Params:
         'cur_page': ''
     }
 
+
 class SetParams:
     """파라미터 변경클래스"""
+
     def __init__(self):
         self.headers = Params().headers
         self.main_params = Params().main_params
         self.crawling_params = Params().crawling_params
 
-    def set_main_params(self, is_transcripted='', is_confirmed='', is_invalid='', is_reject=''):
+    def set_main_params(self, is_transcripted='', is_confirmed='', is_invalid='', is_reject='', is_assigned=''):
         """
         크롤링할 검색조건 세팅메소드
+        is_assigned: 작업자체크(voucher00)
         is_transcripted:작업전체보기 (0, 미작업) (1, 작업중) (2, 작업완료)
         is_confirmed: 컨펌전체보기 (0, 미컨펌) (1, 컨펌완료)
         is_invalid: 문서오류전체보기 (0, 정상문서) (1, 오류문서)
@@ -55,10 +60,9 @@ class SetParams:
         self.main_params['is_confirmed'] = str(is_confirmed)
         self.main_params['is_invalid'] = str(is_invalid)
         self.main_params['is_reject'] = str(is_reject)
-
+        self.main_params['is_assigned'] = str(is_assigned)
 
         return self.main_params
-
 
 
 class Login:
@@ -77,10 +81,11 @@ class BaseScraper:
    """
     session = requests.Session()
 
-    def __init__(self, is_transcripted='', is_confirmed='', is_invalid='', is_reject=''):
+    def __init__(self, is_transcripted='', is_confirmed='', is_invalid='', is_reject='', is_assigned=''):
         self.login_url = 'http://ipaclab.ipactory.com:29983/tr_manager/login/'
         self.main_url = 'http://ipaclab.ipactory.com:29983/tr_manager/main/'
-        self.main_params = SetParams().set_main_params(is_transcripted, is_confirmed, is_invalid, is_reject)
+        self.main_params = SetParams().set_main_params(is_transcripted, is_confirmed, is_invalid, is_reject,
+                                                       is_assigned)
 
     def login_response(self):
         """로그인 세션 요청메소드
@@ -92,26 +97,27 @@ class BaseScraper:
 
         return soup_main
 
+
 class ScriptScraper(BaseScraper):
     """
     번역문 크롤링 클래스
     """
     session = BaseScraper.session
 
+    def __init__(self, is_transcripted='', is_confirmed='', is_invalid='', is_reject='', is_assigned=''):
 
-    def __init__(self, is_transcripted='', is_confirmed='', is_invalid='', is_reject=''):
-
-        self.soup_main = BaseScraper(is_transcripted, is_confirmed, is_invalid, is_reject).login_response()
-        self.main_params = BaseScraper(is_transcripted, is_confirmed, is_invalid, is_reject).main_params
+        self.soup_main = BaseScraper(is_transcripted, is_confirmed, is_invalid, is_reject, is_assigned).login_response()
+        self.main_params = BaseScraper(is_transcripted, is_confirmed, is_invalid, is_reject, is_assigned).main_params
         self.crawling_params = SetParams().crawling_params
         self.data_dict = {}
         self.total_docs = 0
         self.pages_count = 0
 
-
     def get_total_docs(self):
         """전체 페이지 번역문 수 메소드"""
-        total_docs = self.soup_main.find('div', class_='card-body').findChildren('div', class_='row')[1].findChildren('span')[0].text.replace('total docs : ', '')
+        total_docs = \
+        self.soup_main.find('div', class_='card-body').findChildren('div', class_='row')[1].findChildren('span')[
+            0].text.replace('total docs : ', '')
         self.total_docs = int(total_docs)
         return self.total_docs
 
@@ -129,8 +135,11 @@ class ScriptScraper(BaseScraper):
         """페이지 크롤링 메소드"""
         print(f'{self.main_params}')
         self.get_pages_count()
+        headers = ['순번', '원문번호1', '원문번호2', 'desc차이', 'claims차이', '작업자ID', '검수자 ID', '작업상태']
+        dataset = tablib.Dataset(headers=headers)
+
         for page in range(self.pages_count):
-            self.main_params['cur_page'] = str(page+1)
+            self.main_params['cur_page'] = str(page + 1)
 
             main_url = 'http://ipaclab.ipactory.com:29983/tr_manager/main/'
             res = BaseScraper.session.get(url=main_url, params=self.main_params, headers=Params.headers)
@@ -142,16 +151,20 @@ class ScriptScraper(BaseScraper):
             tran_url = 'http://ipaclab.ipactory.com:29983/tr_manager/main/patent_view/'
             print(f'{page + 1}진행중/{self.pages_count}/{len(tr)}')
 
-            self.data_dict = self.script_crawler(tr, self.data_dict, tran_url, page)
+            self.data_dict, dataset = self.script_crawler(tr, self.data_dict, tran_url, page, dataset)
             dict_list = [self.data_dict]
 
             self.save_json(dict_list)
+            self.save_bug_static_xlsx(dataset)
 
 
-    def script_crawler(self, tr, data_dict, tran_url, page):
+
+            break
+
+    def script_crawler(self, tr, data_dict, tran_url, page, dataset):
         """스크립트 크롤링 메소드"""
         for i, td in enumerate(tr, start=1):  # 해당페이지게시글크롤링진행
-            print(f'{page * 10 + i}/{self.total_docs}')
+            print(f'현재 번역문: {page * 10 + i}/{self.total_docs}')
             label_id = td.find_all("label")[0].text
             reviewer = td.find_all("label")[1].text
             trans_btn = td.find("a", class_="btn bg-indigo-400 medium-font search-btn")
@@ -204,20 +217,21 @@ class ScriptScraper(BaseScraper):
 
             self.save_log(data_dict)
 
-
-            is_bug_exists = self.is_get_bugs(data_dict=data_dict)
-            # print(is_bug_exists)
-
-
+            is_bug_exists = False
+            data_dict_transNum = data_dict[transNum]
+            # self.is_get_bugs(data_dict=data_dict)
+            is_bug_exists = self.is_get_bugs(data_dict=data_dict_transNum)
+            print(is_bug_exists)
             if is_bug_exists:
-                dataset = self.get_bug_static(data_dict = data_dict)
 
-                self.save_bug_static_xlsx(dataset=dataset)
-                print("saved")
-
+                value_list = self.get_bug_static(data_dict=data_dict_transNum, transNum=transNum)
+                dataset.append(value_list)
 
 
-        return data_dict
+                # self.save_bug_static_xlsx(dataset=dataset)
+                # print("saved")
+
+        return data_dict, dataset
 
     def get_row(self, contents, desc_dict, claim_dict):
         # desc_origins
@@ -269,7 +283,6 @@ class ScriptScraper(BaseScraper):
 
         log_data = f'{key} {v} {time.asctime()} \n'
 
-
         log_directory = os.path.join(os.getcwd(), f'json/ipaclab_trans_{self.pages_count}_{today}_log.txt')
         with open(log_directory, 'a+t') as f:
             f.write(log_data)
@@ -285,7 +298,6 @@ class ScriptScraper(BaseScraper):
 
         """원문, 번역문 추출 메소드"""
 
-
     def save_bug_static_xlsx(self, dataset):
         today = datetime.date.today().isoformat()
         export_path = os.path.join(os.getcwd(), f'statistic/ipaclab_bugs_check_{today}.xlsx')
@@ -294,77 +306,68 @@ class ScriptScraper(BaseScraper):
         with open(export_path, 'wb') as f_output:
             f_output.write(dataset.export('xlsx'))
 
-
     def is_get_bugs(self, data_dict=None):
         """
         버그가 존재하는 tranNum keys를 리스트로 리턴함
         총 갯수의 일치여부로 버그를 판단
         """
-        for key, value in data_dict.items():
-            is_bug_exists = False
-            tran_num = key
 
-            desc_origin_counts = len(data_dict[tran_num]['desc']['origin'])
-            desc_trans_counts = len(data_dict[tran_num]['desc']['trans'])
-            claims_origin_counts = len(data_dict[tran_num]['claims']['origin'])
-            claims_trans_counts = len(data_dict[tran_num]['claims']['trans'])
+        desc_origin_counts = len(data_dict['desc']['origin'])
+        desc_trans_counts = len(data_dict['desc']['trans'])
+        claims_origin_counts = len(data_dict['claims']['origin'])
+        claims_trans_counts = len(data_dict['claims']['trans'])
+        is_bug_exists = True if desc_origin_counts != desc_trans_counts or claims_origin_counts != claims_trans_counts else False
 
-            is_bug_exists = True if desc_origin_counts != desc_trans_counts or claims_origin_counts != claims_trans_counts else False
-
-            # if is_bug_exists:
-            #     # is_bug_exists.append(tran_num)
+        # for key, value in data_dict.items():
+        #     # tran_num = key
+        #
+        #     desc_origin_counts = len(data_dict['desc']['origin'])
+        #     desc_trans_counts = len(data_dict['desc']['trans'])
+        #     claims_origin_counts = len(data_dict['claims']['origin'])
+        #     claims_trans_counts = len(data_dict['claims']['trans'])
+        #     is_bug_exists = True if desc_origin_counts != desc_trans_counts or claims_origin_counts != claims_trans_counts else False
 
         return is_bug_exists
 
-
-    def get_bug_static(self, data_dict):
+    def get_bug_static(self, data_dict, transNum):
         """작업상태에 따른 버그번역문 정보 리턴 메서드"""
-        headers = ['순번', '원문번호1', '원문번호2', 'desc차이', 'claims차이', '작업자ID', '검수자 ID']
-        dataset = tablib.Dataset(headers=headers)
+
+        # headers = ['순번', '원문번호1', '원문번호2', 'desc차이', 'claims차이', '작업자ID', '검수자 ID', '작업상태']
+        # dataset = tablib.Dataset(headers=headers)
         idx = 0
 
-        for key, value in self.data_dict.items():
-            desc_origins = len(value['desc']['origin'].values())
-            desc_trans = len(value['desc']['trans'].values())
-            claims_origins = len(value['claims']['origin'].values())
-            claims_trans = len(value['claims']['trans'].values())
-            # desc차이
-            desc_subs = abs(desc_origins - desc_trans) if desc_origins != desc_trans else 0
-            # claim차이
-            claims_subs = abs(claims_origins - claims_trans) if claims_origins != claims_trans else 0
-            # 순번
-            idx += 1
-            # 원문번호1
-            tran_num = key
-            # 원문번호2
-            original_num = value['originalNum']
-            # 작업자 ID
-            voucher = value['is_assgined']
-            # 검수자 ID
-            reviewer = value['reviewer']
+        # for key, value in self.data_dict.items():
+        desc_origins = len(data_dict['desc']['origin'].values())
+        desc_trans = len(data_dict['desc']['trans'].values())
+        claims_origins = len(data_dict['claims']['origin'].values())
+        claims_trans = len(data_dict['claims']['trans'].values())
+        # desc차이
+        desc_subs = abs(desc_origins - desc_trans) if desc_origins != desc_trans else 0
+        # claim차이
+        claims_subs = abs(claims_origins - claims_trans) if claims_origins != claims_trans else 0
+        # 순번
+        idx += 1
+        # 원문번호1
+        tran_num = transNum
+        # 원문번호2
+        original_num = data_dict['originalNum']
+        # 작업자 ID
+        voucher = data_dict['is_assgined']
+        # 검수자 ID
+        reviewer = data_dict['reviewer']
+        # 작업상태
+        is_transcripted = data_dict['is_transcripted']
 
-            dataset.append([
-                idx,
-                tran_num,
-                original_num,
-                desc_subs,
-                claims_subs,
-                voucher,
-                reviewer
-            ])
+        value_list = [idx, tran_num, original_num, desc_subs, claims_subs, voucher, reviewer, is_transcripted]
 
-        return dataset
-
+        return value_list
 
 
 def main():
     """여기다가 코드 작성하세요~"""
-    c1 = ScriptScraper(is_confirmed=1)
+    c1 = ScriptScraper(is_assigned='voucher16', is_transcripted=2)
     c1.do_crawler(start_page=0)
 
 
 if __name__ == '__main__':
     main()
-
-
-
