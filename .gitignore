@@ -1,0 +1,6 @@
+.daeyoun
+.ipaclab/base_crawler.py
+*.log
+*.pot
+*.pyc
+__pycache__/
