@@ -5,8 +5,8 @@
 *.pyc
 __pycache__
 
-ipaclab/main.py
-ipaclab/base_crawler.py
+/ipaclab/main.py
+/ipaclab/base_crawler.py
 blur_client/
 
 /pyQt5_example/web.png
