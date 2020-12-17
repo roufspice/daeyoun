@@ -71,7 +71,7 @@ class ScriptScraper(BaseScraper):
 
 
 
-            break
+
 
     def script_crawler(self, tr, data_dict, tran_url, page, dataset):
         """스크립트 크롤링 메소드"""
@@ -133,7 +133,7 @@ class ScriptScraper(BaseScraper):
             data_dict_transNum = data_dict[transNum]
             # self.is_get_bugs(data_dict=data_dict)
             is_bug_exists = self.is_get_bugs(data_dict=data_dict_transNum)
-            print(is_bug_exists)
+            # print(is_bug_exists)
             if is_bug_exists:
 
                 value_list = self.get_bug_static(data_dict=data_dict_transNum, transNum=transNum)
