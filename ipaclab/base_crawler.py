@@ -6,7 +6,7 @@ import os
 import time
 import datetime
 
-
+""
 class Params:
     """request 필요한 요청정보 클래스"""
     headers = {
