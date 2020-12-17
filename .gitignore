@@ -4,6 +4,8 @@
 *.pot
 *.pyc
 __pycache__
+
 ipaclab/main.py
-ipacalb/base_crawler.py
+ipaclab/base_crawler.py
+blur_client/
 
