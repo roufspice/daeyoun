@@ -112,3 +112,25 @@ def is_bounding_box_within_width(bounding_box, image_width, image_height):
         bounding_box['height'] = (image_height - bounding_box['y'])
 
     return all([is_bounding_width, is_bounding_height])
+
+
+def is_keypoints_within_bounding_box(annotation):
+
+    bounding_box = annotation["bounding_box"]
+    keypoints = annotation["keypoints"]
+
+    start_point_x = bounding_box['x']
+    end_point_x = bounding_box['x'] + bounding_box['width']
+    start_point_y = bounding_box['y']
+    end_point_y = bounding_box['y'] + bounding_box['height']
+
+    for key, value in keypoints.items():
+        x = value['x']
+        y = value['y']
+
+        result_y = False if y < start_point_y or y > end_point_y else True
+        result_x = False if x < start_point_x or x > end_point_x else True
+
+        if not all([result_x, result_y]):
+            print(keypoints[key])
+            keypoints[key] = None
