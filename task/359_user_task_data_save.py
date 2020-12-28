@@ -30,7 +30,7 @@ def handle(self, *args, **options):
             if task.id == 6095925:
                 print(task.id)
 
-                task.data = previous_user_task.data
+                task.data['user_task_data'] = previous_user_task.data
                 task.save()
 
                 break
