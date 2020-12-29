@@ -69,7 +69,7 @@ class ExportBackend(BaseExportBackend):
                 }
 
 
-                is_bounding_box_within(annotation)
+                is_keypoints_within_bounding_box(annotation)
 
                 annotations.append(annotation)
 
@@ -112,7 +112,8 @@ def is_bounding_box_within_boundary(bounding_box, image_width, image_height):
     return all([is_bounding_width, is_bounding_height])
 
 
-def is_bounding_box_within(annotation):
+def is_keypoints_within_bounding_box(annotation):
+    """바운딩 박스 범위 초과 키포인트 삭제"""
     bounding_box = annotation["bounding_box"]
     keypoints = annotation["keypoints"]
 
@@ -121,13 +122,21 @@ def is_bounding_box_within(annotation):
     start_point_y = bounding_box['y']
     end_point_y = bounding_box['y'] + bounding_box['height']
 
-    for key, value in keypoints.items():
-        x = value['x']
-        y = value['y']
 
-        result_y = False if y < start_point_y or y > end_point_y else True
-        result_x = False if x < start_point_x or x > end_point_x else True
+    for key, value in keypoints.items():
+        result_x = True
+        result_y = True
+        # print(value)
+        try:
+            x = value['x']
+            y = value['y']
+
+            result_y = False if y < start_point_y or y > end_point_y else True
+            result_x = False if x < start_point_x or x > end_point_x else True
+
+        except TypeError:
+            pass
 
         if not all([result_x, result_y]):
-            print(keypoints[key])
+            # 결과값이 False 일때
             keypoints[key] = None
