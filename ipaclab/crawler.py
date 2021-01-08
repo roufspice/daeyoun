@@ -139,10 +139,6 @@ class ScriptScraper(BaseScraper):
                 value_list = self.get_bug_static(data_dict=data_dict_transNum, transNum=transNum)
                 dataset.append(value_list)
 
-
-                # self.save_bug_static_xlsx(dataset=dataset)
-                # print("saved")
-
         return data_dict, dataset
 
     def get_row(self, contents, desc_dict, claim_dict):
@@ -230,22 +226,12 @@ class ScriptScraper(BaseScraper):
         claims_trans_counts = len(data_dict['claims']['trans'])
         is_bug_exists = True if desc_origin_counts != desc_trans_counts or claims_origin_counts != claims_trans_counts else False
 
-        # for key, value in data_dict.items():
-        #     # tran_num = key
-        #
-        #     desc_origin_counts = len(data_dict['desc']['origin'])
-        #     desc_trans_counts = len(data_dict['desc']['trans'])
-        #     claims_origin_counts = len(data_dict['claims']['origin'])
-        #     claims_trans_counts = len(data_dict['claims']['trans'])
-        #     is_bug_exists = True if desc_origin_counts != desc_trans_counts or claims_origin_counts != claims_trans_counts else False
 
         return is_bug_exists
 
     def get_bug_static(self, data_dict, transNum):
         """작업상태에 따른 버그번역문 정보 리턴 메서드"""
 
-        # headers = ['순번', '원문번호1', '원문번호2', 'desc차이', 'claims차이', '작업자ID', '검수자 ID', '작업상태']
-        # dataset = tablib.Dataset(headers=headers)
         idx = 0
 
         # for key, value in self.data_dict.items():
@@ -277,7 +263,7 @@ class ScriptScraper(BaseScraper):
 
 def main():
     """여기다가 코드 작성하세요~"""
-    c1 = ScriptScraper(is_assigned='voucher16', is_transcripted=2)
+    c1 = ScriptScraper(is_transcripted=2,is_assigned='voucher16')
     c1.do_crawler(start_page=0)
 
 
