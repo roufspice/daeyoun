@@ -77,6 +77,9 @@ class ScriptScraper(BaseScraper):
         """스크립트 크롤링 메소드"""
         for i, td in enumerate(tr, start=1):  # 해당페이지게시글크롤링진행
             print(f'현재 번역문: {page * 10 + i}/{self.total_docs}')
+            #TODO 크롤링 목록 IDX 추가
+            idx = td.find("td", class_="org-no").text
+
             label_id = td.find_all("label")[0].text
             reviewer = td.find_all("label")[1].text
             trans_btn = td.find("a", class_="btn bg-indigo-400 medium-font search-btn")
@@ -101,6 +104,7 @@ class ScriptScraper(BaseScraper):
             trans_soup = BeautifulSoup(res.text, 'html.parser')
 
             self.data_dict[transNum] = {
+                'idx': idx,
                 'originalNum': originalNum,
                 'is_transcripted': is_transcripted,
                 'is_assgined': label_id,
@@ -232,7 +236,6 @@ class ScriptScraper(BaseScraper):
     def get_bug_static(self, data_dict, transNum):
         """작업상태에 따른 버그번역문 정보 리턴 메서드"""
 
-        idx = 0
 
         # for key, value in self.data_dict.items():
         desc_origins = len(data_dict['desc']['origin'].values())
@@ -244,7 +247,7 @@ class ScriptScraper(BaseScraper):
         # claim차이
         claims_subs = abs(claims_origins - claims_trans) if claims_origins != claims_trans else 0
         # 순번
-        idx += 1
+        idx = data_dict['idx']
         # 원문번호1
         tran_num = transNum
         # 원문번호2
@@ -263,7 +266,7 @@ class ScriptScraper(BaseScraper):
 
 def main():
     """여기다가 코드 작성하세요~"""
-    c1 = ScriptScraper(is_transcripted=2,is_assigned='voucher16')
+    c1 = ScriptScraper(is_transcripted=2, is_assigned='voucher16')
     c1.do_crawler(start_page=0)
 
 
