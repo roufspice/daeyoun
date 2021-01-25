@@ -40,12 +40,10 @@ t1 = threading.Thread(target=generator, args=(1,10))
 # start() 스레드 활동을 시작합니다.
 # 스레드 객체 당 최대 한 번 호출되어야 합니다.
 t1.start()
-t2.start()
-# 쓰레드가 종료할 때까지 대기, 호출된 스레드가 정상적으로 혹은 처리되지 않은 예외를 통해 종료,
+# join: 쓰레드가 종료할 때까지 대기, 호출된 스레드가 정상적으로 혹은 처리되지 않은 예외를 통해 종료
 t1.join(timeout=None)
 t1.is_alive()
-t2.join()
-t2.is_alive()
+
 
 
 

@@ -15,8 +15,6 @@ class ScriptSraper(BaseScraper):
         self.pages_count = 0
         self.dataset_headers = ['idx', '원문번호1', '원문번호2', 'desc차이', 'claims차이', '작업자ID', '검수자 ID', '작업상태']
 
-
-
     def get_total_docs(self):
         """전체 페이지 번역문 수 메소드"""
         soup_main = self.login_response()
@@ -123,7 +121,6 @@ class ScriptSraper(BaseScraper):
                 dataset.append(value_list)
 
         return data_dict, dataset
-
 
     def get_row(self, contents, desc_dict, claim_dict):
         #desc_origins
@@ -233,9 +230,6 @@ class ScriptSraper(BaseScraper):
         value_list = [idx, tran_num, original_num, desc_subs, claims_subs, voucher, reviewer, is_transcripted]
 
         return value_list
-
-
-
 
 if __name__ == '__main__':
     p1 = ScriptSraper()
