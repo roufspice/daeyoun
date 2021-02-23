@@ -48,17 +48,17 @@ class HTMLExporter(Exporter):
         print("\nHTML 문서 변환 중~")
 
         new_content = """
-<!DOCTYPE html>
-<html>
-<head>
-<title>Title of the document</title>
-</head>
-
-<body>
-{}
-</body>
-
-</html>
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <title>Title of the document</title>
+        </head>
+        
+        <body>
+        {}
+        </body>
+        
+        </html>
         """.format(document.content)
         exported_document = Document(new_name, new_content)
 
