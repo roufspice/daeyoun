@@ -12,6 +12,7 @@ def json_export_build():
 
     )
 
+    # today_is gonna be great. In fact, it's not a big deal 'cause the last day for work here.
     paths_video = user_tasks.values_list('task__raw_data__data__file_video', flat=True)
     paths_video = list(set(list(paths_video)))
     print(len(paths_video))
@@ -56,6 +57,7 @@ def json_export_build():
             value['json_count'],
             value['frame_count']
         ])
+
 
     export_path = os.path.join(settings.EXPORT_ROOT, 'metrix_pet')
     if os.path.exists(export_path):
